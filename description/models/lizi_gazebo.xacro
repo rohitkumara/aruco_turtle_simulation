@@ -1,0 +1,422 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="lizi" description="lizi robot">
+  <xacro:include filename="$(find robotican_lizi)/description/models/lizi.xacro" />
+  <xacro:include filename="$(find robotican_common)/gazebo/softkinetic_camera_ds325.xacro" />
+
+  <!-- fauzan -->
+  <xacro:include filename="$(find mobilican_macros)/macros/depth_cam.xacro" />
+  <xacro:include filename="$(find mobilican_macros)/macros/cam.xacro" />
+
+
+  <xacro:arg name="controllers" default="true"/>  
+  <xacro:arg name="urf" default="false"/>
+  <xacro:arg name="imu" default="false"/>
+  <xacro:arg name="gps" default="false"/>
+  <!-- <xacro:arg name="front_camera" default="false"/> -->
+  <xacro:arg name="front_camera" default="true"/>
+  <xacro:arg name="lidar" default="false"/>
+  <xacro:arg name="depth_camera" default="false"/>
+  <xacro:arg name="asus_hz" default="10.0"/> 
+  <xacro:property name="URF_FOV" value="${10.0*M_PI/180}" />
+
+ <xacro:if value="$(arg urf)">
+      <gazebo reference="left_urf_link">
+       <material>Gazebo/Black</material>
+      <sensor type="ray" name="range">
+        <always_on>true</always_on>
+        <update_rate>10</update_rate>
+        <pose>0 0 0 0 0 0</pose>
+        <visualize>false</visualize>
+        <ray>
+    <scan>
+      <horizontal>
+        <samples>10</samples>
+        <resolution>1</resolution>
+        <min_angle>${-URF_FOV/2.0}</min_angle>
+        <max_angle>${URF_FOV/2.0}</max_angle>
+      </horizontal>
+      <vertical>
+        <samples>10</samples>
+        <resolution>1</resolution>
+        <min_angle>${-URF_FOV/2.0}</min_angle>
+        <max_angle>${URF_FOV/2.0}</max_angle>
+      </vertical>
+    </scan>
+    <range>
+      <min>0.01</min>
+      <max>5.0</max>
+      <resolution>0.001</resolution>
+    </range>
+        </ray>
+        <plugin name="gazebo_ros_left_urf_controller" filename="libhector_gazebo_ros_sonar.so">
+    <gaussianNoise>0.0001</gaussianNoise>
+    <topicName>URF/left</topicName>
+    <frameId>left_urf_link</frameId>
+        </plugin>
+      </sensor>
+    </gazebo>
+    <gazebo reference="right_urf_link">
+      <sensor type="ray" name="range">
+        <always_on>true</always_on>
+        <update_rate>10</update_rate>
+        <pose>0 0 0 0 0 0</pose>
+        <visualize>false</visualize>
+        <ray>
+    <scan>
+      <horizontal>
+        <samples>10</samples>
+        <resolution>1</resolution>
+        <min_angle>${-URF_FOV/2.0}</min_angle>
+        <max_angle>${URF_FOV/2.0}</max_angle>
+      </horizontal>
+      <vertical>
+        <samples>10</samples>
+        <resolution>1</resolution>
+        <min_angle>${-URF_FOV/2.0}</min_angle>
+        <max_angle>${URF_FOV/2.0}</max_angle>
+      </vertical>
+    </scan>
+    <range>
+      <min>0.01</min>
+      <max>5.0</max>
+      <resolution>0.01</resolution>
+    </range>
+        </ray>
+        <plugin name="gazebo_ros_left_urf_controller" filename="libhector_gazebo_ros_sonar.so">
+    <gaussianNoise>0.001</gaussianNoise>
+    <topicName>URF/right</topicName>
+    <frameId>right_urf_link</frameId>
+        </plugin>
+      </sensor>
+    </gazebo>
+    
+    <gazebo reference="rear_urf_link">
+      <sensor type="ray" name="range">
+        <always_on>true</always_on>
+        <update_rate>10</update_rate>
+        <pose>0 0 0 0 0 0</pose>
+        <visualize>false</visualize>
+        <ray>
+    <scan>
+      <horizontal>
+        <samples>10</samples>
+        <resolution>1</resolution>
+        <min_angle>${-URF_FOV/2.0}</min_angle>
+        <max_angle>${URF_FOV/2.0}</max_angle>
+      </horizontal>
+      <vertical>
+        <samples>10</samples>
+        <resolution>1</resolution>
+        <min_angle>${-URF_FOV/2.0}</min_angle>
+        <max_angle>${URF_FOV/2.0}</max_angle>
+      </vertical>
+    </scan>
+    <range>
+      <min>0.01</min>
+      <max>5.0</max>
+      <resolution>0.01</resolution>
+    </range>
+        </ray>
+        <plugin name="gazebo_ros_left_urf_controller" filename="libhector_gazebo_ros_sonar.so">
+    <gaussianNoise>0.0001</gaussianNoise>
+    <topicName>URF/rear</topicName>
+    <frameId>rear_urf_link</frameId>
+        </plugin>
+      </sensor>
+    </gazebo>
+ </xacro:if> 
+
+ <xacro:if value="$(arg lidar)">
+    <gazebo reference="laser_link">
+      <sensor type="ray" name="head_hokuyo_sensor">
+        <pose>0 0 0 0 0 0</pose>
+        <visualize>false</visualize>
+        <update_rate>10</update_rate>
+        <ray>
+    <scan>
+      <horizontal>
+        <samples>512</samples>
+        <resolution>1</resolution>
+        <min_angle>-1.57</min_angle>
+        <max_angle>1.57</max_angle>
+      </horizontal>
+    </scan>
+    <range>
+      <min>0.02</min>
+      <max>5.6</max>
+      <resolution>0.01</resolution>
+    </range>
+    <noise>
+      <type>gaussian</type>
+      <mean>0.0</mean>
+      <stddev>0.01</stddev>
+    </noise>
+        </ray>
+        <plugin name="gazebo_ros_head_hokuyo_controller" filename="libgazebo_ros_laser.so">
+    <topicName>scan</topicName>
+    <frameName>laser_link</frameName>
+        </plugin>
+      </sensor>
+    </gazebo>
+  </xacro:if>
+
+  <!-- GPS   -->
+  <xacro:if value="$(arg gps)">
+    <gazebo>
+      <plugin name="GazeboRosGps" filename="libhector_gazebo_ros_gps.so">
+        <updateRate>50.0</updateRate>
+        <bodyName>base_link</bodyName>
+        <frameId>base_link</frameId>
+        <topicName>GPS/fix</topicName>
+        <serviceName>SERVICE_GPS</serviceName>
+        <velocityTopicName>GPS/fix_velocity</velocityTopicName>
+        <gaussianNoise>2.89e-08 2.89e-08 2.89e-08</gaussianNoise>
+        <velocityGaussianNoise>2.89e-08 2.89e-08 2.89e-08</velocityGaussianNoise>
+      </plugin>
+    </gazebo>
+  </xacro:if>
+
+  <!-- IMU   -->
+  <xacro:if value="$(arg imu)">
+    <gazebo>
+      <plugin name="GazeboRosImu" filename="libhector_gazebo_ros_imu.so">
+        <alwaysOn>true</alwaysOn>
+        <updateRate>50.0</updateRate> 
+        <bodyName>base_link</bodyName>
+        <frameId>base_link</frameId>
+        <topicName>IMU/data</topicName>
+        <gaussianNoise>0.1</gaussianNoise>
+        <xyzOffsets>0 0 ${M_PI}</xyzOffsets>
+        <rpyOffsets>0 0 0</rpyOffsets>
+        <material>Gazebo/Red</material>
+      </plugin>
+    </gazebo>
+    
+    <!-- Magnetic   -->
+    <gazebo>
+      <plugin name="GazeboRosMagnetic" filename="libhector_gazebo_ros_magnetic.so">
+        <updateRate>50.0</updateRate>
+        <bodyName>base_link</bodyName>
+        <frameId>base_link</frameId>
+        <topicName>IMU/magnetic</topicName>
+        <offset>0 0 0</offset>
+        <drift>0.0 0.0 0.0</drift>
+        <gaussianNoise>1.3e-2 1.3e-2 1.3e-2</gaussianNoise>
+      </plugin>
+    </gazebo>
+  </xacro:if>
+
+  <!-- cameras  -->
+  <xacro:if value="$(arg front_camera)">
+    <gazebo reference="camera_link">
+      <sensor type="camera" name="front_camera">
+        <update_rate>30.0</update_rate>
+        <camera name="front_camera">
+    <horizontal_fov>1.3962634</horizontal_fov>
+    <image>
+      <width>640</width>
+      <height>480</height>
+      <format>R8G8B8</format>
+    </image>
+    <clip>
+      <near>0.02</near>
+      <far>300</far>
+    </clip>
+    <noise>
+      <type>gaussian</type>
+      <mean>0.0</mean>
+      <stddev>0.007</stddev>
+    </noise>
+        </camera>
+        <plugin name="front_camera_controller" filename="libgazebo_ros_camera.so">
+    <alwaysOn>true</alwaysOn>
+    <updateRate>0.0</updateRate>
+    <cameraName>front_camera</cameraName>
+    <imageTopicName>image_raw</imageTopicName>
+    <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+    <frameName>camera_link</frameName>
+    <hackBaseline>0.07</hackBaseline>
+    <distortionK1>0.0</distortionK1>
+    <distortionK2>0.0</distortionK2>
+    <distortionK3>0.0</distortionK3>
+    <distortionT1>0.0</distortionT1>
+    <distortionT2>0.0</distortionT2>
+        </plugin>
+      </sensor>
+    </gazebo>
+  </xacro:if>
+  <xacro:if value="$(arg depth_camera)">  
+	  <xacro:softkinetic_gazebo name="softkinetic_camera_rgb" ros_topic="softkinetic_camera"/> 
+  </xacro:if>
+
+  <!-- fauzan -->
+  <!-- <xacro:if value="$(arg front_camera)">
+     
+      <xacro:Camera name="rgb_cam" 
+                    link="rgb_cam_link" 
+                    image_width="1280" 
+                    image_height="720" 
+                    image_format="R8G8B8" 
+                    clip_near="0.02" 
+                    clip_far="200"
+                    image_topic="image_raw"
+                    info_topic="info"
+                    update_rate="30"
+                    horizontal_fov="1.064" />
+          
+  </xacro:if>
+      
+  <xacro:if value="$(arg depth_camera)">
+      
+      <xacro:DepthCam name="camera" 
+                      link="camera_link" 
+                      optical_frame="camera_depth_optical_frame"
+                      horizontal_fov="1.592" 
+                      img_width="1280"
+                      img_height="800" 
+                      img_format="B8G8R8" 
+                      clip_near="0.1" 
+                      clip_far="200" 
+                      update_rate="30.0" 
+                      image_topic="color/image_raw" 
+                      depth_topic="depth/color/image_raw" 
+                      cloud_topic="depth/color/points" 
+                      info_topic="color/camera_info" 
+                      depth_info_topic="depth/camera_info" 
+                      pointcloud_cuttoff="0.2" /> 
+      
+  </xacro:if>
+ -->
+
+  <xacro:if value="$(arg controllers)">
+    <gazebo> 
+      <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <robotSimType>gazebo_ros_control/RoboticanRobotHWSim</robotSimType> 
+      </plugin> 
+    </gazebo>
+    
+    <transmission name="FL_wheel_joint_trans">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="FL_wheel_joint">
+        <hardwareInterface>VelocityJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="FL_wheel_joint_motor">
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+  
+    <transmission name="RL_wheel_joint_trans">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="RL_wheel_joint">
+        <hardwareInterface>VelocityJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="RL_wheel_joint_motor">
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+    
+    <transmission name="RR_wheel_joint_trans">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="RR_wheel_joint">
+        <hardwareInterface>VelocityJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="RR_wheel_joint_motor">
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+
+    <transmission name="FR_wheel_joint_trans">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="FR_wheel_joint">
+        <hardwareInterface>VelocityJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="FR_wheel_joint_motor">
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+  
+
+  <gazebo reference="sr300_link">
+    <material>Gazebo/FlatBlack</material>
+   </gazebo>
+<gazebo reference="right_urf_link">
+    <material>Gazebo/Black</material>
+  </gazebo>
+  <gazebo reference="left_urf_link">
+    <material>Gazebo/Black</material>
+  </gazebo>
+    <gazebo reference="rear_urf_link">
+    <material>Gazebo/Black</material>
+  </gazebo>
+    <gazebo reference="base_link">
+    <material>Gazebo/Green</material>
+  </gazebo>
+    <gazebo reference="laser_link">
+    <material>Gazebo/FlatBlack</material>
+  </gazebo>
+  <gazebo reference="FL_wheel_link">
+    <material>Gazebo/FlatBlack</material>
+  </gazebo>
+   <gazebo reference="FR_wheel_link">
+    <material>Gazebo/FlatBlack</material>
+  </gazebo>
+    <gazebo reference="RL_wheel_link">
+    <material>Gazebo/FlatBlack</material>
+  </gazebo>
+    <gazebo reference="RR_wheel_link">
+    <material>Gazebo/FlatBlack</material>
+  </gazebo>
+  <gazebo reference="camera_link">
+    <material>Gazebo/FlatBlack</material>
+   </gazebo>
+   
+ <gazebo reference="FL_wheel_link">
+    <!-- kp and kd for rubber -->
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+    <mu1>1.5</mu1>
+    <mu2>1.5</mu2>
+    <fdir1>1 0 0</fdir1>
+    <maxVel>1.0</maxVel>
+    <minDepth>0.00</minDepth>
+        <material>Gazebo/Black</material>
+  </gazebo>
+  
+   <gazebo reference="FR_wheel_link">
+    <!-- kp and kd for rubber -->
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+    <mu1>1.5</mu1>
+    <mu2>1.5</mu2>
+    <fdir1>1 0 0</fdir1>
+    <maxVel>1.0</maxVel>
+    <minDepth>0.00</minDepth>
+        <material>Gazebo/Black</material>
+  </gazebo>
+
+   <gazebo reference="RL_wheel_link">
+    <!-- kp and kd for rubber -->
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+    <mu1>1.5</mu1>
+    <mu2>1.5</mu2>
+    <fdir1>1 0 0</fdir1>
+    <maxVel>1.0</maxVel>
+    <minDepth>0.00</minDepth>
+        <material>Gazebo/Black</material>
+  </gazebo>
+  
+   <gazebo reference="RR_wheel_link">
+    <!-- kp and kd for rubber -->
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+    <mu1>1.5</mu1>
+    <mu2>1.5</mu2>
+    <fdir1>1 0 0</fdir1>
+    <maxVel>1.0</maxVel>
+    <minDepth>0.00</minDepth>
+        <material>Gazebo/Black</material>
+  </gazebo>
+</xacro:if>
+
+</robot>

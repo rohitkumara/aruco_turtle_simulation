@@ -1,0 +1,195 @@
+<?xml version="1.0"?>
+<launch>
+  
+  <arg name="gazebo" default='false'/>
+  <arg name="world_name" default="worlds/empty.world"/> <!-- Note: the world_name is with respect to GAZEBO_RESOURCE_PATH environmental variable -->
+  <arg name="controllers" default='true'/>
+
+  <arg name="robot_localization" default='false'/>
+  <arg name="move_base" default='false'/>
+  <arg name="hector_slam" default='false'/>
+  <arg name="gmapping" default='false'/>
+  <arg name="amcl" default='false'/>
+  <arg name="have_map_file" default='false'/>
+  <arg name="map_file" default="$(find robotican_common)/maps/UPlat.yaml"/>
+  <arg name="depth_camera" default="false"/>
+
+     
+  <arg name="rqt" default='false'/>
+
+  <arg name="front_camera" default='true'/>
+  <arg name="lidar" default='true'/>
+  <arg name="gps" default='false'/>
+  <arg name="urf" default='false'/>
+  <arg name="imu" default='true'/>
+  <arg name="sr300" default='false'/>
+  <arg name="joystick" default='false'/>
+  <arg name="joystick_dev" default='/dev/input/js0'/>
+  <arg name="twist_mux" default='true'/>
+
+   <arg name="paused" default="false"/>
+	<arg name="use_sim_time" default="true"/>
+	<arg name="gui" default="true"/>
+	<arg name="headless" default="false"/>
+	<arg name="debug" default="false"/> 
+  
+  <arg name="x" default="0.0"/>
+  <arg name="y" default="0.0"/>
+  <arg name="z" default="0.0"/>
+  <arg name="R" default="0.0" />
+  <arg name="P" default="0.0" />
+  <arg name="Y" default="0.0" />
+  
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen"/>
+  
+  <group if="$(arg twist_mux)" >
+		<include file="$(find robotican_common)/launch/twist_mux.launch">
+		</include>
+  </group>
+  
+  <group if="$(arg joystick)" >
+	<rosparam file="$(find robotican_lizi)/config/joystick_teleop.yaml" command="load"/>
+	<include file="$(find robotican_common)/launch/joystick_teleop.launch">
+	  <arg name="joystick_dev" value="$(arg joystick_dev)"/>
+	 </include>
+	 
+  </group>
+
+   <group if="$(arg gazebo)">
+    <env name="GAZEBO_MODEL_PATH" value="$(find robotican_common)/models:$(optenv GAZEBO_MODEL_PATH)"/>
+    <param name="robot_description" command="$(find xacro)/xacro.py '$(find aruco_turtle_sim)/description/models/lizi_gazebo.xacro' 
+	   controllers:=$(arg controllers)
+	   front_camera:=true
+	   lidar:=$(arg lidar)
+	   urf:=$(arg urf)
+	   imu:=$(arg imu)
+	   gps:=$(arg gps)
+	   depth_camera:=$(arg depth_camera)
+	   " /> 
+	  
+
+    
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+     <arg name="world_name" value="$(arg world_name)"/>
+     <!-- <arg name="world_name" value="$(find robotican_common)/worlds/UPlat.sdf"/> -->
+      <arg name="debug" value="$(arg debug)" />
+      <arg name="gui" value="$(arg gui)" />
+      <arg name="paused" value="$(arg paused)"/>
+      <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+      <arg name="headless" value="$(arg headless)"/>
+    </include>
+    
+
+    <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" 
+	  args="-urdf -model lizi -param robot_description -x $(arg x) -y $(arg y) -z $(arg z) -R $(arg R) -P $(arg P) -Y $(arg Y)"/> 
+    
+    
+    </group>
+
+ 
+    
+    <group unless="$(arg gazebo)">
+		<group if="$(arg front_camera)">
+			<include file="$(find robotican_common)/launch/usb_cam.launch">
+				<arg name="input_dev" value="/dev/LifeCam_HD_3000" />
+				<arg name="camera_frame_id" value="front_cam_link" />
+				<arg name="pixel_format" value="yuyv" /> <!-- mjpeg, yuyv, uyvy  -->
+				<arg name="image_width" value="1280" />
+				<arg name="image_height" value="720" />
+				<arg name="node_name" value="front_cam" />
+			</include>
+		</group>
+		
+		<group if="$(arg sr300)">
+			<include file="$(find robotican_common)/launch/sr300.launch"/> 
+		</group>
+		
+		<group if="$(arg depth_camera)">
+			<include file="$(find robotican_common)/launch/softkinetic_camera_ds325.launch"/> 
+		</group>
+		
+		<group if="$(arg lidar)">
+			<include file="$(find robotican_common)/launch/hokuyo_laser.launch">
+				<arg name="input_dev" value="/dev/Hokuyo" />
+				<arg name="frame_id" value="laser_link" />
+				<arg name="min_ang" value="-1.57" />
+				<arg name="max_ang" value="1.57" />
+			</include>
+		</group>
+		
+
+		<param name="robot_description" command="$(find xacro)/xacro.py '$(find robotican_lizi)/description/models/lizi.xacro'" />
+		<rosparam file="$(find robotican_lizi)/config/hardware_interface_config.yaml" command="load"/>
+		<param name="have_close_loop_motor" value="true" />
+		<param name="have_open_loop_motor" value="false" />
+		<param name="have_battery" value="true" />
+		<param name="have_close_loop_position_motor" value="true" />
+		<param name="have_ultrasonic" value="$(arg urf)" />
+		<param name="have_gps" value="$(arg gps)" />
+                <param name="have_imu" value="$(arg imu)" />
+
+		<node name="robotican_hardware_interface" pkg="robotican_hardware_interface" type="robotican_hardware_interface_node" respawn="false" output="screen" >
+		</node> 
+    </group>
+	<group if="$(arg have_map_file)">
+		<node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
+	</group>
+
+  
+	<group if="$(arg amcl)">
+		<include file="$(find robotican_common)/launch/amcl_diff.launch">
+			<arg name="x" value="$(arg x)"/>
+			<arg name="y" value="$(arg y)"/>
+			<arg name="Y" value="$(arg Y)" />
+		</include>
+	</group>
+	<group if="$(arg gmapping)">
+		<include file="$(find robotican_common)/launch/gmapping_slam.launch"/>
+	</group>
+      
+	<group if="$(arg hector_slam)">
+		<include file="$(find robotican_common)/launch/hector_slam.launch"/>
+    </group>
+
+	<group if="$(arg controllers)">
+    
+		<rosparam file="$(find robotican_lizi)/config/controllers.yaml" command="load"/>
+    	<group if="$(arg robot_localization)">
+			<include file="$(find robotican_common)/launch/robot_localization.launch"/>
+			<param name="/mobile_base_controller/enable_odom_tf" value="false" />
+		</group>
+    
+		<node name="controller_spawner_common" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="	  
+		robot_state_controller
+		mobile_base_controller
+	  " />
+	</group>
+    
+  
+	<group if="$(arg move_base)">
+		<rosparam file="$(find robotican_lizi)/navigation/config/move_base_params.yaml" command="load" ns="move_base"/>
+		<rosparam file="$(find robotican_lizi)/navigation/config/costmap_common_params.yaml" command="load" ns="move_base/global_costmap" />
+		<rosparam file="$(find robotican_lizi)navigation/config/costmap_common_params.yaml" command="load" ns="move_base/local_costmap" />
+		<rosparam file="$(find robotican_lizi)/navigation/config/local_costmap_params.yaml" command="load" ns="move_base/local_costmap" />
+		<rosparam file="$(find robotican_lizi)/navigation/config/global_costmap_params.yaml" command="load" ns="move_base/global_costmap"/>
+		<include file="$(find robotican_common)/launch/move_base.launch">
+		</include>
+	</group>
+
+
+
+
+	<group if="$(arg rqt)">
+		<node pkg="rqt_gui" type="rqt_gui" name="rqt_gui" output="screen" respawn="false" />
+	</group>
+
+	<group unless="$(arg amcl)">
+		<group unless="$(arg hector_slam)">
+			<group unless="$(arg gmapping)">
+				<node pkg="tf" type="static_transform_publisher" name="map_odom_broadcaster" args="0 0 0 0 0 0 /map /odom 20" />
+			</group>
+		</group>
+	</group>
+
+</launch>
+

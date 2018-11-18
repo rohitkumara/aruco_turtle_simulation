@@ -1,0 +1,40 @@
+<launch>
+
+
+  <!-- Lizi -->
+
+  <include file="$(find aruco_turtle_sim)/launch/lizi.launch">
+
+    <arg name="gazebo" value="true"/>
+    <arg name="world_name"  default="worlds/inspire_lab.world"/> <!-- Note: the world_name is with respect to GAZEBO_RESOURCE_PATH environmental variable -->
+
+    <arg name="move_base" value="true"/>
+    <arg name="have_map_file" value="true"/>
+    <arg name="map_file" default="/home/fauzan/maps/map_inspire_lab_20180929.yaml"/>
+
+    <arg name="front_camera" value="true"/>
+    <!-- <arg name="depth_camera" value="true"/> -->
+    <!-- Depth camera does not work -->
+
+  </include>
+
+
+  <!-- For move base -->
+  <!-- <arg name="move_base_in_vel" default="/navigation_velocity_smoother/raw_cmd_vel"/> -->
+  <!-- <arg name="move_base_out_vel" default="/cmd_vel_mux/input/teleop"/> -->
+  <!-- <node name="relay" pkg="topic_tools" type="relay" args="$(arg move_base_in_vel) $(arg move_base_out_vel)"/> -->
+
+
+
+  <!-- Map to Odom publisher, replaces amcl -->
+
+  <!-- <arg name="aruco_frame" default="/camera_position"/>
+  <arg name="lizi_frame" default="/camera_rgb_optical_frame"/>
+
+  <node name="aruco_turtle_sim_drift_broadcaster_node" pkg="aruco_turtle_sim" type="aruco_turtle_sim_drift_broadcaster_node" args="_aruco_frame:=$(arg aruco_frame) _lizi_frame:=$(arg lizi_frame)"/> -->
+ 
+
+  <!-- Temp -->
+  <node name="static_transform_publisher" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 /map /odom 10"/>
+
+</launch>

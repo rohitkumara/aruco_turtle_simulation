@@ -1,0 +1,44 @@
+<launch>
+
+
+  <!-- Turtle -->
+
+  <include file="$(find turtlebot_gazebo)/launch/turtlebot_world.launch">
+    <arg name="world_file"  default="worlds/imaginary.world"/> <!-- Note: the world_name is with respect to GAZEBO_RESOURCE_PATH environmental variable -->
+    <arg name="3d_sensor" value="kinect"/>
+  </include>
+
+  <!-- Laser scan from point cloud from velodyne -->
+  <!-- <node name="pointcloud_to_laserscan_node" pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" args="velodyne_points2 scan_velodyne" /> -->
+
+
+  <!-- Map server -->
+
+  <!-- <arg name="map_file" default="$(env TURTLEBOT_GAZEBO_MAP_FILE)"/> -->
+  <arg name="map_file" default="/home/fauzan/maps/map_inspire_corridor_20181101.yaml"/>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" />
+
+
+
+  <!-- Move base -->
+
+  <include file="$(find turtlebot_navigation)/launch/includes/move_base.launch.xml"/>
+
+  <arg name="move_base_in_vel" default="/navigation_velocity_smoother/raw_cmd_vel"/>
+  <arg name="move_base_out_vel" default="/cmd_vel_mux/input/teleop"/>
+  <node name="relay" pkg="topic_tools" type="relay" args="$(arg move_base_in_vel) $(arg move_base_out_vel)"/>
+
+
+
+  <!-- Map to Odom publisher, replaces amcl -->
+
+  <arg name="aruco_frame" default="/camera_position"/>
+  <arg name="lizi_frame" default="/camera_rgb_optical_frame"/>
+
+  <node name="aruco_turtle_sim_drift_broadcaster_node" pkg="aruco_turtle_sim" type="aruco_turtle_sim_drift_broadcaster_node" args="_aruco_frame:=$(arg aruco_frame) _lizi_frame:=$(arg lizi_frame)"/> 
+ 
+
+  <!-- Temp --><!-- 
+  <node name="static_transform_publisher" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 /map /odom 10"/>
+ -->
+</launch>
